@@ -1,0 +1,94 @@
+from flask import Flask, render_template, send_from_directory, request, jsonify
+import os
+import sqlite3
+
+app = Flask(__name__)
+
+
+DB_PATH = "/opt/trueoffice/trueoffice.db"
+
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL COLLATE NOCASE UNIQUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def get_users():
+    conn = sqlite3.connect(DB_PATH)
+    rows = conn.execute(
+        "SELECT username FROM users ORDER BY username COLLATE NOCASE"
+    ).fetchall()
+    conn.close()
+    return [row[0] for row in rows]
+
+
+init_db()
+
+
+@app.route("/api/users", methods=["GET"])
+def api_users():
+    return jsonify({
+        "users": get_users()
+    })
+
+
+@app.route("/api/users", methods=["POST"])
+def api_add_user():
+    data = request.get_json(silent=True) or {}
+
+    username = str(data.get("username", "")).strip()
+
+    if not username:
+        return jsonify({
+            "ok": False,
+            "error": "Name is required"
+        }), 400
+
+    if len(username) > 50:
+        return jsonify({
+            "ok": False,
+            "error": "Name is too long"
+        }), 400
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.execute(
+            "INSERT INTO users (username) VALUES (?)",
+            (username,)
+        )
+        conn.commit()
+        conn.close()
+
+    except sqlite3.IntegrityError:
+        return jsonify({
+            "ok": False,
+            "error": "User already exists"
+        }), 409
+
+    return jsonify({
+        "ok": True,
+        "username": username,
+        "users": get_users()
+    })
+
+
+@app.route("/")
+def home():
+    return render_template("chat.html")
+
+
+@app.route("/login")
+def login():
+    return send_from_directory("/opt/trueoffice", "login.html")
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

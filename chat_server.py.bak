@@ -1,0 +1,56 @@
+import socket
+import threading
+
+
+clients = []
+
+
+def broadcast(message):
+    for client in clients:
+        try:
+            client.send(message.encode())
+        except:
+            pass
+
+
+def handle(client):
+
+    while True:
+        try:
+            msg = client.recv(1024).decode()
+
+            if msg:
+                print(msg)
+                broadcast(msg)
+
+        except:
+            clients.remove(client)
+            client.close()
+            break
+
+
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+server.bind(("0.0.0.0", 9000))
+
+server.listen()
+
+
+print("TrueOffice Chat Server Running on port 9000")
+
+
+while True:
+
+    client, addr = server.accept()
+
+    print("Connected:", addr)
+
+    clients.append(client)
+
+    thread = threading.Thread(
+        target=handle,
+        args=(client,)
+    )
+
+    thread.start()

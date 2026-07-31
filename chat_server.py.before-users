@@ -1,0 +1,43 @@
+import asyncio
+import websockets
+
+clients = set()
+
+
+async def broadcast(message):
+    if clients:
+        await asyncio.gather(
+            *(client.send(message) for client in clients),
+            return_exceptions=True
+        )
+
+
+async def handle(websocket):
+    clients.add(websocket)
+    print("Connected:", websocket.remote_address)
+
+    try:
+        async for message in websocket:
+            print(message)
+            await broadcast(message)
+
+    except websockets.exceptions.ConnectionClosed:
+        pass
+
+    finally:
+        clients.discard(websocket)
+        print("Disconnected:", websocket.remote_address)
+
+
+async def main():
+    async with websockets.serve(
+        handle,
+        "0.0.0.0",
+        9000
+    ):
+        print("TrueOffice WebSocket Server Running on port 9000")
+        await asyncio.Future()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

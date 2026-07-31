@@ -1,0 +1,532 @@
+let username = localStorage.getItem("username") || "Guest";
+
+let socket = new WebSocket("ws://192.168.75.130:9000");
+
+const messagesBox = document.getElementById("messages");
+
+
+socket.onopen = function(){
+
+    console.log("Connected to TrueOffice Server");
+
+    socket.send(JSON.stringify({
+        type: "join",
+        username: username
+    }));
+
+};
+
+
+socket.onmessage = function(event){
+
+    let data;
+
+    try{
+        data = JSON.parse(event.data);
+    }catch(error){
+        console.error("Invalid server message:", event.data);
+        return;
+    }
+
+
+    if(data.type === "users"){
+
+        updateOnlineUsers(data.users);
+        return;
+
+    }
+
+
+    if(data.type === "system"){
+
+        console.log(data.message);
+        return;
+
+    }
+
+
+    if(data.type === "message"){
+
+        addMessage(
+            data.username,
+            data.text
+        );
+
+    }
+
+};
+
+
+function addMessage(sender, text){
+
+    if(!messagesBox){
+        return;
+    }
+
+
+    const row = document.createElement("div");
+
+    row.className = "msg-row";
+
+
+    const avatar = document.createElement("div");
+
+    avatar.className = "avatar blue";
+
+    avatar.textContent =
+        sender.charAt(0).toUpperCase();
+
+
+    const content = document.createElement("div");
+
+    content.className = "message-content";
+
+
+    const meta = document.createElement("div");
+
+    meta.className = "message-meta";
+
+
+    const name = document.createElement("strong");
+
+    name.textContent = sender;
+
+
+    const time = document.createElement("span");
+
+    time.textContent =
+        new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+
+
+    meta.appendChild(name);
+    meta.appendChild(time);
+
+
+    const bubble = document.createElement("div");
+
+    bubble.className = "bubble";
+
+
+    renderMessageText(bubble, text);
+
+
+    content.appendChild(meta);
+    content.appendChild(bubble);
+
+    row.appendChild(avatar);
+    row.appendChild(content);
+
+    messagesBox.appendChild(row);
+
+    messagesBox.scrollTop =
+        messagesBox.scrollHeight;
+
+}
+
+
+function renderMessageText(element, text){
+
+    const parts = text.split(/(@[A-Za-z0-9_-]+)/g);
+
+
+    parts.forEach(function(part){
+
+        if(part.startsWith("@")){
+
+            const mention =
+                document.createElement("span");
+
+            mention.className = "mention";
+
+            mention.textContent = part;
+
+            element.appendChild(mention);
+
+        }else{
+
+            element.appendChild(
+                document.createTextNode(part)
+            );
+
+        }
+
+    });
+
+}
+
+
+function sendMessage(){
+
+    if(!socket ||
+       socket.readyState !== WebSocket.OPEN){
+
+        alert("Chat server se connection nahi hai.");
+
+        return;
+
+    }
+
+
+    const input =
+        document.getElementById("messageInput");
+
+    if(!input){
+        return;
+    }
+
+    const text =
+        input.value.trim();
+
+
+    if(text === ""){
+        return;
+    }
+
+
+    socket.send(JSON.stringify({
+
+        type: "message",
+
+        text: text
+
+    }));
+
+
+    input.value = "";
+
+}
+
+
+function updateOnlineUsers(users){
+
+    onlineUsers = Array.isArray(users) ? users : [];
+
+    console.log("Mention users updated:", onlineUsers);
+
+    const list = document.getElementById("userList");
+    const count = document.getElementById("onlineCount");
+    const status = document.getElementById("onlineStatus");
+
+    if(count){
+        count.textContent = users.length;
+    }
+
+    if(status){
+        status.innerHTML =
+            '<span class="status-dot"></span> ' +
+            users.length +
+            ' member' +
+            (users.length === 1 ? '' : 's') +
+            ' online';
+    }
+
+    if(!list){
+        return;
+    }
+
+    list.innerHTML = "";
+
+    users.forEach(function(user, index){
+
+        const row = document.createElement("div");
+        row.className = "user";
+
+        const avatar = document.createElement("div");
+        avatar.className =
+            "avatar " +
+            ["purple","blue","green","orange"][index % 4];
+
+        avatar.textContent =
+            user.charAt(0).toUpperCase();
+
+        const info = document.createElement("div");
+        info.className = "user-info";
+
+        const name = document.createElement("strong");
+        name.textContent = user;
+
+        const state = document.createElement("small");
+        state.textContent =
+            user === username ? "You • Available" : "Available";
+
+        info.appendChild(name);
+        info.appendChild(state);
+
+        const dot = document.createElement("i");
+        dot.className = "online";
+
+        row.appendChild(avatar);
+        row.appendChild(info);
+        row.appendChild(dot);
+
+        list.appendChild(row);
+    });
+
+    console.log("Online users:", users);
+}
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const messageInput =
+            document.getElementById(
+                "messageInput"
+            );
+
+
+        if(messageInput){
+
+            messageInput.addEventListener(
+                "keydown",
+                function(event){
+
+                    if(event.key === "Enter"){
+
+                        event.preventDefault();
+
+                        sendMessage();
+
+                    }
+
+                }
+            );
+
+        }
+
+    }
+);
+
+
+function logout(){
+
+    localStorage.removeItem("username");
+
+    window.location = "/";
+
+}
+
+
+/* =========================
+   @MENTION SYSTEM
+========================= */
+
+let onlineUsers = [];
+
+
+function showMentionSuggestions(){
+
+    const box =
+        document.getElementById("mentionSuggestions");
+
+    if(!box){
+        return;
+    }
+
+    
+    const input =
+        document.getElementById("messageInput");
+
+    if(!input){
+        return;
+    }
+
+    const value = input.value;
+
+    const match = value.match(/@([A-Za-z0-9_-]*)$/);
+
+    if(!match){
+
+        box.style.display = "none";
+
+        return;
+    }
+
+
+    const query =
+        match[1].toLowerCase();
+
+
+    const matches =
+        onlineUsers.filter(function(user){
+
+            const name = user.toLowerCase();
+
+            if(!query){
+                return true;
+            }
+
+            // Normal partial match: @rah -> Rahul
+            if(name.includes(query)){
+                return true;
+            }
+
+            // Forgiving match: @raah -> Rahul
+            let qi = 0;
+
+            for(let i = 0; i < name.length && qi < query.length; i++){
+
+                if(name[i] === query[qi]){
+                    qi++;
+                }
+
+            }
+
+            return qi === query.length;
+
+        });
+
+
+    if(matches.length === 0){
+
+        box.style.display = "none";
+
+        return;
+    }
+
+
+    box.innerHTML = "";
+
+
+    matches.forEach(function(user){
+
+        const option =
+            document.createElement("div");
+
+        option.className =
+            "mention-option";
+
+
+        const avatar =
+            document.createElement("div");
+
+        avatar.className =
+            "mention-avatar";
+
+        avatar.textContent =
+            user.charAt(0).toUpperCase();
+
+
+        const info =
+            document.createElement("div");
+
+
+        const name =
+            document.createElement("strong");
+
+        name.textContent =
+            user;
+
+
+        const status =
+            document.createElement("small");
+
+        status.textContent =
+            "Online";
+
+
+        info.appendChild(name);
+        info.appendChild(status);
+
+
+        option.appendChild(avatar);
+        option.appendChild(info);
+
+
+        option.addEventListener(
+            "click",
+            function(){
+
+                const value =
+                    input.value;
+
+                input.value =
+                    value.replace(
+                        /@[A-Za-z0-9_-]*$/,
+                        "@" + user + " "
+                    );
+
+                box.style.display =
+                    "none";
+
+                input.focus();
+
+            }
+        );
+
+
+        box.appendChild(option);
+
+    });
+
+
+    box.style.display = "block";
+
+}
+
+
+const originalUpdateOnlineUsers =
+    updateOnlineUsers;
+
+
+updateOnlineUsers = function(users){
+
+    onlineUsers = users || [];
+
+    originalUpdateOnlineUsers(users);
+
+};
+
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const mentionInput =
+        document.getElementById("messageInput");
+
+    if(mentionInput){
+
+        mentionInput.addEventListener(
+            "input",
+            showMentionSuggestions
+        );
+
+        mentionInput.addEventListener(
+            "keyup",
+            showMentionSuggestions
+        );
+
+    }
+
+});
+
+
+document.addEventListener(
+    "click",
+    function(event){
+
+        const box =
+            document.getElementById(
+                "mentionSuggestions"
+            );
+
+        if(!box){
+            return;
+        }
+
+        if(
+            event.target !== input &&
+            !box.contains(event.target)
+        ){
+
+            box.style.display =
+                "none";
+
+        }
+
+    }
+);
+

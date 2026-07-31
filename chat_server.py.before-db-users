@@ -1,0 +1,109 @@
+import asyncio
+import json
+import websockets
+
+clients = {}
+
+
+async def send_json(websocket, data):
+    await websocket.send(json.dumps(data))
+
+
+async def broadcast(data):
+    if not clients:
+        return
+
+    message = json.dumps(data)
+
+    await asyncio.gather(
+        *(client.send(message) for client in clients),
+        return_exceptions=True
+    )
+
+
+async def broadcast_users():
+    users = list(clients.values())
+
+    await broadcast({
+        "type": "users",
+        "users": users
+    })
+
+
+async def handle(websocket):
+    username = None
+
+    try:
+        async for raw_message in websocket:
+
+            try:
+                data = json.loads(raw_message)
+            except json.JSONDecodeError:
+                continue
+
+            message_type = data.get("type")
+
+            if message_type == "join":
+
+                username = str(data.get("username", "Guest")).strip()
+
+                if not username:
+                    username = "Guest"
+
+                clients[websocket] = username
+
+                print("Connected:", username, websocket.remote_address)
+
+                await send_json(websocket, {
+                    "type": "system",
+                    "message": f"{username} joined TrueOffice"
+                })
+
+                await broadcast_users()
+
+            elif message_type == "message":
+
+                if websocket not in clients:
+                    continue
+
+                username = clients[websocket]
+
+                text = str(data.get("text", "")).strip()
+
+                if not text:
+                    continue
+
+                await broadcast({
+                    "type": "message",
+                    "username": username,
+                    "text": text
+                })
+
+    except websockets.exceptions.ConnectionClosed:
+        pass
+
+    finally:
+
+        if websocket in clients:
+            username = clients.pop(websocket)
+
+            print("Disconnected:", username)
+
+            await broadcast_users()
+
+
+async def main():
+
+    async with websockets.serve(
+        handle,
+        "0.0.0.0",
+        9000
+    ):
+
+        print("TrueOffice WebSocket Server Running on port 9000")
+
+        await asyncio.Future()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

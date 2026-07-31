@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueOffice</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">T</div>
+            <div>
+                <strong>TrueOffice</strong>
+                <span>Workplace Connect</span>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <span>⌕</span>
+            <input type="text" placeholder="Search people...">
+        </div>
+
+        <div class="section-title">
+            <span>WORKSPACE</span>
+        </div>
+
+        <div class="nav-item active">
+            <span>💬</span>
+            <div>
+                <strong>Team Chat</strong>
+                <small>Office conversation</small>
+            </div>
+        </div>
+
+        <div class="nav-item">
+            <span>👥</span>
+            <div>
+                <strong>Team</strong>
+                <small>People in office</small>
+            </div>
+        </div>
+
+        <div class="section-title users-title">
+            <span>ONLINE NOW</span>
+            <b id="onlineCount">0</b>
+        </div>
+
+        <div class="user-list" id="userList">
+            <div class="user">
+                <div class="avatar purple">?</div>
+                <div class="user-info">
+                    <strong>Connecting...</strong>
+                    <small>Connecting to server</small>
+                </div>
+                <i class="online"></i>
+            </div>
+        </div>
+
+        <div class="sidebar-bottom">
+            <div class="profile">
+                <div class="avatar profile-avatar">U</div>
+                <div>
+                    <strong id="currentUser">Guest</strong>
+                    <small><i class="online"></i> Online</small>
+                </div>
+                <button onclick="logout()" title="Logout">↪</button>
+            </div>
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CHAT -->
+    <main class="chat-area">
+
+        <header class="chat-header">
+
+            <div class="chat-title">
+                <div class="team-icon">👥</div>
+                <div>
+                    <h2>Office Team</h2>
+                    <p id="onlineStatus"><span class="status-dot"></span> Connecting...</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button id="moreMenuBtn" title="More">⋮</button>
+
+                
+                <div id="addUserModal" class="user-modal">
+                    <div class="user-modal-card">
+                        <button id="closeAddUser" class="modal-close" type="button">×</button>
+
+                        <h3>Add Office Member</h3>
+                        <p>Add a person to the TrueOffice directory.</p>
+
+                        <input
+                            id="newUsername"
+                            type="text"
+                            maxlength="50"
+                            autocomplete="off"
+                            placeholder="Enter full name"
+                        >
+
+                        <div id="addUserError" class="modal-error"></div>
+
+                        <div class="modal-actions">
+                            <button id="cancelAddUser" type="button">Cancel</button>
+                            <button id="saveNewUser" type="button">Add User</button>
+                        </div>
+                    </div>
+                </div>
+
+<div id="moreMenu" class="more-menu">
+
+                    <button id="addUserBtn" type="button">
+                        <span>👤</span>
+                        <div>
+                            <strong>Add User</strong>
+                            <small>Add a new office member</small>
+                        </div>
+                    </button>
+
+                    <button id="teamBtn" type="button">
+                        <span>👥</span>
+                        <div>
+                            <strong>Team</strong>
+                            <small>View office members</small>
+                        </div>
+                    </button>
+
+                    <button id="logoutMenuBtn" type="button">
+                        <span>↪</span>
+                        <div>
+                            <strong>Logout</strong>
+                            <small>Sign out of TrueOffice</small>
+                        </div>
+                    </button>
+
+                </div>
+
+                <button title="Search">⌕</button>
+                
+            </div>
+
+        </header>
+
+
+        <section class="messages" id="messages">
+
+            <div class="date-divider">
+                <span>Today</span>
+            </div>
+
+            <div class="msg-row">
+                <div class="avatar purple">R</div>
+
+                <div class="message-content">
+                    <div class="message-meta">
+                        <strong>Rahul</strong>
+                        <span>10:21 AM</span>
+                    </div>
+
+                    <div class="bubble">
+                        Hello Team 👋
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="msg-row">
+                <div class="avatar blue">A</div>
+
+                <div class="message-content">
+                    <div class="message-meta">
+                        <strong>Amit</strong>
+                        <span>10:23 AM</span>
+                    </div>
+
+                    <div class="bubble">
+                        <span class="mention">@Rahul</span>
+                        Backup complete ho gaya.
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="msg-row">
+                <div class="avatar green">P</div>
+
+                <div class="message-content">
+                    <div class="message-meta">
+                        <strong>Pooja</strong>
+                        <span>10:25 AM</span>
+                    </div>
+
+                    <div class="bubble">
+                        Server report attached 📎
+                    </div>
+
+                    <div class="file-card">
+                        <div class="file-icon">📄</div>
+                        <div>
+                            <strong>Server_Report.pdf</strong>
+                            <small>PDF document</small>
+                        </div>
+                        <button>↓</button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- COMPOSER -->
+        <footer class="composer-area">
+
+            <div class="typing-hint" id="typingHint"></div>
+
+            <div class="composer">
+
+                <button class="tool-btn" id="attachBtn" title="Attach file">
+                    📎
+                </button>
+
+                <input type="file" id="fileInput" hidden>
+
+                <input
+                    id="messageInput"
+                    autocomplete="off"
+                    placeholder="Write a message... Use @ to mention someone"
+                >
+
+                <button class="emoji-btn" title="Emoji">☺</button>
+
+                <button class="send-btn" onclick="sendMessage()">
+                    <span>Send</span>
+                    <b>➤</b>
+                </button>
+
+            </div>
+
+            <div id="mentionSuggestions" class="mention-suggestions"></div>
+
+            <div class="composer-footer">
+                <span>Press <b>Enter</b> to send</span>
+                <span>🔒 Private office network</span>
+            </div>
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    const user = localStorage.getItem("username") || "Guest";
+    const currentUser = document.getElementById("currentUser");
+
+    if(currentUser){
+        currentUser.textContent = user;
+    }
+});
+</script>
+\n<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const user = localStorage.getItem("username") || "Guest";
+
+    const currentUser = document.getElementById("currentUser");
+
+    if (currentUser) {
+        currentUser.textContent = user;
+    }
+
+    const attachBtn = document.getElementById("attachBtn");
+    const fileInput = document.getElementById("fileInput");
+
+    if (attachBtn && fileInput) {
+        attachBtn.addEventListener("click", function () {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener("change", function () {
+            if (this.files.length) {
+                document.getElementById("messageInput").placeholder =
+                    this.files[0].name;
+            }
+        });
+    }
+});
+</script>
+
+</body>
+</html>

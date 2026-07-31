@@ -1,0 +1,6 @@
+tunnel: d8ea30e1-9f1c-4559-967d-b51517af010a
+
+ingress:
+  - hostname: trueoffice.duckdns.org
+    service: http://127.0.0.1:5000
+  - service: http_status:404

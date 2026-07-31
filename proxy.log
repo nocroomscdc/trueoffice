@@ -1,0 +1,9 @@
+nohup: ignoring input
+Traceback (most recent call last):
+  File "/opt/trueoffice/proxy.py", line 41, in <module>
+    with socketserver.ThreadingTCPServer(("127.0.0.1", PORT), Proxy) as server:
+  File "/usr/lib64/python3.9/socketserver.py", line 452, in __init__
+    self.server_bind()
+  File "/usr/lib64/python3.9/socketserver.py", line 466, in server_bind
+    self.socket.bind(self.server_address)
+OSError: [Errno 98] Address already in use

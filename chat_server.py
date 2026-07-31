@@ -1,0 +1,178 @@
+import asyncio
+import json
+import websockets
+
+from database import init_db, get_users, add_user, save_message, get_messages
+
+
+clients = {}
+
+
+async def send_json(websocket, data):
+    await websocket.send(json.dumps(data))
+
+
+async def broadcast(data):
+    if not clients:
+        return
+
+    message = json.dumps(data)
+
+    await asyncio.gather(
+        *(client.send(message) for client in list(clients)),
+        return_exceptions=True
+    )
+
+
+async def broadcast_users():
+    online_users = list(dict.fromkeys(clients.values()))
+    all_users = get_users()
+
+    await broadcast({
+        "type": "users",
+        "users": online_users,
+        "all_users": all_users
+    })
+
+
+async def send_history(websocket):
+    await send_json(websocket, {
+        "type": "history",
+        "messages": get_messages(500)
+    })
+
+
+async def handle(websocket):
+
+    username = None
+
+    try:
+        async for raw_message in websocket:
+
+            try:
+                data = json.loads(raw_message)
+            except json.JSONDecodeError:
+                continue
+
+            message_type = data.get("type")
+
+            if message_type == "join":
+
+                username = str(
+                    data.get("username", "Guest")
+                ).strip() or "Guest"
+
+                add_user(username)
+
+                clients[websocket] = username
+
+                print("Connected:", username, websocket.remote_address)
+
+                await send_history(websocket)
+
+                await send_json(websocket, {
+                    "type": "system",
+                    "message": f"{username} joined TrueOffice"
+                })
+
+                await broadcast_users()
+
+            elif message_type == "add_user":
+
+                new_username = str(
+                    data.get("username", "")
+                ).strip()
+
+                if not new_username:
+                    await send_json(websocket, {
+                        "type": "user_result",
+                        "success": False,
+                        "message": "Username required"
+                    })
+                    continue
+
+                if len(new_username) > 50:
+                    await send_json(websocket, {
+                        "type": "user_result",
+                        "success": False,
+                        "message": "Username too long"
+                    })
+                    continue
+
+                created = add_user(new_username)
+
+                await send_json(websocket, {
+                    "type": "user_result",
+                    "success": created,
+                    "username": new_username,
+                    "message": (
+                        f"{new_username} added"
+                        if created
+                        else f"{new_username} already exists"
+                    )
+                })
+
+                if created:
+                    await broadcast_users()
+
+            elif message_type == "message":
+
+                if websocket not in clients:
+                    continue
+
+                username = clients[websocket]
+
+                text = str(
+                    data.get("text", "")
+                ).strip()
+
+                if not text:
+                    continue
+
+                message = save_message(username, text)
+
+                await broadcast({
+                    "type": "message",
+                    "id": message["id"],
+                    "username": message["username"],
+                    "text": message["text"],
+                    "created_at": message["created_at"]
+                })
+
+    except websockets.exceptions.ConnectionClosed:
+        pass
+
+    finally:
+
+        if websocket in clients:
+
+            disconnected_user = clients.pop(websocket)
+
+            print("Disconnected:", disconnected_user)
+
+            await broadcast_users()
+
+
+async def main():
+
+    init_db()
+
+    print("Saved users:", get_users())
+    print("Saved messages:", len(get_messages(500)))
+
+    async with websockets.serve(
+        handle,
+        "0.0.0.0",
+        9000
+    ):
+
+        print(
+            "TrueOffice WebSocket Server "
+            "Running on port 9000"
+        )
+
+        await asyncio.Future()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

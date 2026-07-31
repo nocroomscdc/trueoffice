@@ -1,0 +1,92 @@
+let username = localStorage.getItem("username") || "Guest";
+
+let socket = new WebSocket("ws://192.168.75.130:9000");
+
+
+socket.onopen = function(){
+
+    console.log("Connected to TrueOffice Server");
+
+};
+
+
+socket.onmessage = function(event){
+
+    let box = document.getElementById("messages");
+
+    let msg = document.createElement("div");
+
+    msg.className="msg";
+
+    msg.innerHTML = event.data;
+
+    box.appendChild(msg);
+
+    box.scrollTop = box.scrollHeight;
+
+};
+
+
+
+function sendMessage(){
+
+    let input=document.getElementById("messageInput");
+
+    let text=input.value.trim();
+
+
+    if(text===""){
+        return;
+    }
+
+
+    let time=new Date().toLocaleTimeString();
+
+
+    let message =
+    `
+    <b>${username}</b>
+    <p>${text}</p>
+    <small>${time}</small>
+    `;
+
+
+    socket.send(message);
+
+
+    input.value="";
+
+}
+
+
+
+document.addEventListener("DOMContentLoaded",function(){
+
+    let input=document.getElementById("messageInput");
+
+
+    if(input){
+
+        input.addEventListener("keypress",function(event){
+
+            if(event.key==="Enter"){
+
+                sendMessage();
+
+            }
+
+        });
+
+    }
+
+});
+
+
+
+function logout(){
+
+    localStorage.removeItem("username");
+
+    window.location="login.html";
+
+}

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>TrueOffice Chat</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="header">
+    <h2>💬 TrueOffice Chat</h2>
+    <span>🟢 Online Users: 8</span>
+</div>
+
+
+<div class="container">
+
+<div class="users">
+<h3>Users</h3>
+
+<p>🟢 NAWAB</p>
+<p>🟢 Amit</p>
+<p>🔴 Mohit</p>
+<p>🟢 Pooja</p>
+<p>🟢 Admin</p>
+
+</div>
+
+
+<div class="chat">
+
+<div class="messages" id="messages">
+
+<div class="msg">
+<b>Rahul</b>
+<p>Hello Team 👋</p>
+<small>10:21 AM</small>
+</div>
+
+
+<div class="msg">
+<b>Amit</b>
+<p>@Rahul Backup complete ho gaya.</p>
+<small>10:23 AM</small>
+</div>
+
+
+<div class="msg">
+<b>Pooja</b>
+<p>Server report attached 📎</p>
+<small>10:25 AM</small>
+</div>
+
+
+</div>
+
+
+<div class="input">
+
+<input type="file" id="fileInput">
+
+<input id="messageInput" placeholder="Type message...">
+
+<button onclick="sendMessage()">
+Send
+</button>
+
+<button onclick="uploadFile()">
+📎
+</button>
+
+</div>
+
+</div>
+
+</div>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>
