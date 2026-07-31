@@ -1,6 +1,6 @@
 from flask import Flask, render_template, send_from_directory, request, jsonify
 import sqlite3
-
+import os
 from database import init_db, get_users, add_user, get_messages
 
 app = Flask(__name__)
