@@ -3,8 +3,8 @@ let allUsers = [];
 
 let socketUrl =
     (location.protocol === "https:" ? "wss://" : "ws://") +
-    location.host +
-    "/ws";
+    location.hostname +
+    ":9000";
 
 let socket = new WebSocket(socketUrl);
 
