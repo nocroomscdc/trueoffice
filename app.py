@@ -5,7 +5,6 @@ from database import init_db, get_users, add_user, get_messages
 
 app = Flask(__name__)
 
-DB_PATH = "/opt/trueoffice/trueoffice.db"
 
 init_db()
 
@@ -17,7 +16,7 @@ def home():
 
 @app.route("/login")
 def login():
-    return send_from_directory("/opt/trueoffice", "login.html")
+    return send_from_directory(".", "login.html")
 
 
 @app.route("/api/users", methods=["GET"])
