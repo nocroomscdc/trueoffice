@@ -1,14 +1,10 @@
 let username = localStorage.getItem("username") || "Guest";
 let allUsers = [];
 
-let socketUrl =
+let socket = new WebSocket(
     (location.protocol === "https:" ? "wss://" : "ws://") +
-    location.hostname +
-    ":9000";
-
-let socket = new WebSocket(socketUrl);
-
-const messagesBox = document.getElementById("messages");
+    location.hostname + ":9000"
+);
 
 
 socket.onopen = function(){
@@ -1459,7 +1455,7 @@ document.addEventListener(
                     socket =
                         new WebSocket(
                             (location.protocol === "https:" ? "wss://" : "ws://") +
-                            location.host + "/ws"
+                            location.hostname + ":9000"
                         );
 
                     socket.onopen = function(){
